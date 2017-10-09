@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="http://dimplejs.org/dist/dimple.v2.0.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/1.13.0/d3-legend.js"></script>
+    <script src="https://d3js.org/d3-interpolate.v1.min.js"></script>
+    <script src="https://d3js.org/d3-scale-chromatic.v1.js"></script>
+    <script src="https://d3js.org/d3-color.v1.min.js"></script>
+    <script src="https://d3js.org/d3-interpolate.v1.min.js"></script>
+    <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+    <script src="https://d3js.org/d3-array.v1.min.js"></script>
+    <script src="https://d3js.org/d3-collection.v1.min.js"></script>
+    <script src="https://d3js.org/d3-color.v1.min.js"></script>
+    <script src="https://d3js.org/d3-format.v1.min.js"></script>
+    <script src="https://d3js.org/d3-interpolate.v1.min.js"></script>
+    <script src="https://d3js.org/d3-time.v1.min.js"></script>
+    <script src="https://d3js.org/d3-time-format.v2.min.js"></script>
+    <script src="https://d3js.org/d3-scale.v1.min.js"></script>
+            
+    <style>
+
+      h2 {
+        text-align: center;
+      }
+
+      h5{
+        color:steelblue;
+      }
+
+      svg {
+         display: block;
+         margin: auto;
+
+      }
+    </style>
+
+    <script type="text/javascript">
+      function draw(data) {
+      
+      /*
+        D3.js setup code
+      */
+
+          "use strict";
+          var margin = 120,
+              width = 1420 - margin,
+              height = 620 - margin;
+
+          d3.select("body")
+            .append("h2")
+            .text("网球公开赛20年: 球员平均变化")
+            .append("h5")
+            .text("—— 更高，更强，更成熟")
+            .attr("font-color","blue")
+
+          var svg = d3.select("body")
+            .append("svg")
+              .attr("width", width + margin)
+              .attr("height", height + margin)
+            .append('g')
+                .attr('class','chart');
+
+      /*
+        Dimple.js Chart construction code
+      */
+
+
+          // Find range of date column
+          var time_extent = d3.extent(data, function(d) {
+              return d['Year'];
+          });
+
+          // Find range of attendance column
+          // var count_extent = d3.extent(data, function(d) {
+          //     return d['ht_sum'];
+          // })
+
+          // Create x-axis scale mapping dates -> pixels
+          var x = d3.time.scale()
+            .range([margin, width])
+            .domain(time_extent);
+
+          // Create y-axis scale mapping attendance -> pixels
+          var y = d3.scale.linear()
+            .range([height, margin])
+            .domain([182,188]);
+
+          var time_axis = d3.svg.axis()
+            .scale(x)
+            .ticks(d3.time.years, 1);
+
+          var count_axis = d3.svg.axis()
+            .scale(y)
+            .orient("left");
+
+          d3.select("svg")
+            .append("g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(0," + height + ")")
+            .call(time_axis)
+            .append('text')
+            .text('年份')
+            .attr("transform", "translate(660,50)")
+            .attr("font-weight","bold")
+
+
+          d3.select("svg")
+            .append("g")
+            .attr("class", "y axis")
+            .attr("transform", "translate(" + margin + ",0)")
+            .call(count_axis)
+            .append('text')
+            .text('平均身高')
+            .attr("transform", "translate(-120,262.5)")
+            .attr("font-weight","bold")
+            // .attr('transform','translate(0，1400)')
+
+          // var line = d3.svg.line()
+          //             .x(function(d){return x(d['Year'])})
+          //             .y(function(d){return y(d['avg_winner_ht'])})
+          //             // .interpolate("step-after")
+
+          // var path = svg.append('path')
+          //             .attr('class','line')
+          //             .attr('d',line(data))
+          //             .style("fill","none")
+          //             .style("stroke-width",1)
+          //             // .style("stroke",function(d){
+          //             //   return "rgb(0,0,"+(data['avg_winner_age']*10)+")"
+          //             // })
+          //             .style("stroke","red")
+          //             .style("stroke-opacity",0.9);
+
+          var line = d3.svg.line()
+                      .x(function(d){return x(d['Year'])})
+                      .y(function(d){return y(d['ht_sum'])})
+                      // .interpolate("step-after")
+
+          var path = svg.append('path')
+                      .attr('class','line')
+                      .attr('d',line(data))
+                      .style("fill","blue")
+                      .style("fill","none")
+                      .style("stroke-width",1)
+                      .style("stroke","blue")
+                      .style("stroke-opacity",0.9);
+
+          d3.select("svg")
+            .selectAll("circle")
+            .data(data)
+            .enter()
+            .append("circle");
+
+          var radius = d3.scale.sqrt()
+                           .domain([24, 29])
+                           .range([5, 20]);
+
+          var interpolate = d3.interpolateBlues
+          var colorScale = d3.scaleSequential()
+            .domain([4,7])
+            .interpolator(interpolate);
+
+
+          d3.selectAll("circle")
+            .attr("cx", function(d){return x(d['Year'])})
+            .attr("cy", function(d) {return y(d['ht_sum'])})
+            .attr("r",10)
+            .attr("fill",function(d){
+              return colorScale(d['ace_sum'])
+            })
+            .style("fill-opacity",0.8)
+            .attr("r", function(d){return radius(d['age_sum'])})
+            .attr("ace",function(d){return d['ace_sum'].toFixed(2)})
+            .on("mouseover",mMove)
+            .on("mouseout",mOut)
+
+
+          function mMove(){
+
+               var m = d3.mouse(this);
+               var height = y.invert(d3.select(this).attr("cy")).toFixed(2)
+               var year = x.invert(d3.select(this).attr("cx")).getFullYear()
+               var age = radius.invert(d3.select(this).attr("r")).toFixed(2)
+               var ace = d3.select(this).attr("ace")
+               // var ace = colorScale.invert(d3.select(this).attr("fill"))
+
+
+
+               d3.select(this)
+                .transition(0)
+                .duration(250)
+                .attr("stroke","rgb(255,0,0)")
+                .style("fill-opacity",1)
+
+
+                var xPosition = parseFloat(d3.select(this).attr("cx"))+10
+                var yPosition = parseFloat(d3.select(this).attr("cy"))+30
+
+              svg.append("text")
+                  .data(data)
+                  .attr('id', 'tips-text1')
+                  .attr("x",xPosition-10)
+                  .attr("y",yPosition+10)
+                  .attr("text-anchor","left")
+                  .text(function(d){
+                    return "年份：" + year
+                  })
+
+
+              svg.append("text")
+                  .data(data)
+                  .attr('id', 'tips-text2')
+                  .attr("x",xPosition-10)
+                  .attr("y",yPosition+30)
+                  .attr("text-anchor","left")
+                  .text(function(d){
+                    return "身高：" + height
+                  })
+
+              svg.append("text")
+                  .data(data)
+                  .attr('id', 'tips-text3')
+                  .attr("x",xPosition-10)
+                  .attr("y",yPosition+50)
+                  .attr("text-anchor","left")
+                  .text(function(d){
+                    return "年龄：" + age
+                  })
+
+              svg.append("text")
+                  .data(data)
+                  .attr('id', 'tips-text5')
+                  .attr("x",xPosition-10)
+                  .attr("y",yPosition+70)
+                  .attr("text-anchor","left")
+                  .text(function(d){
+                    return "Ace：" + ace
+                  })
+
+
+
+              svg.append('rect')
+                    .attr('id', 'tips-text4')
+                    .attr('width', 110)
+                    .attr('height', 100)
+                    .attr('x', xPosition-15)
+                    .attr('y', yPosition-10)
+                    .attr('rx', 10)
+                    .attr('ry', 10)
+                    .attr('fill',"grey")
+                    .attr("fill-opacity",0.4)
+                    .attr('stroke','grey')
+                    .append('text')
+                    .text("fffff")
+
+          }
+          function mOut(){
+               var m = d3.mouse(this);
+              d3.select(this)
+                .transition(0)
+                .duration(250)
+                .attr("stroke","none")
+                .style("fill-opacity",0.8)
+
+              d3.select("#tips-text4").remove()
+              d3.select("#tips-text1").remove()
+              d3.select("#tips-text2").remove()
+              d3.select("#tips-text3").remove()
+              d3.select("#tips-text5").remove()
+              
+          }
+
+
+
+          var svg = d3.select("svg")
+
+          svg.append("g")
+            .attr("class","legendSize")
+            .attr("transform","translate(820,450)")
+            .attr("fill","rgb(72,118,255)")
+            .style("fill-opacity",1)
+            .append('text')
+            .text("平均年龄")
+            .attr("transform","translate(80,-20)")
+            .attr("font-weight","bold")
+
+
+          var legendSize = d3.legend.size()
+            .scale(radius)
+            .shape('circle')
+            .shapePadding(15)
+            .labelOffset(20)
+            .orient('horizontal')
+
+          svg.select(".legendSize")
+            .attr("fill","rgb(55, 135, 192)")
+            .style("stroke-opacity",0.8)
+            .call(legendSize)
+            // build color legend 
+          var linear = d3.scaleLinear()
+            .domain([4,7])
+            .range(["rgb(247, 251, 255)","rgb(8, 48, 107)"])
+            // .range(["white","blue"])
+
+          svg.append("g")
+            .attr("class","legendcolor")
+            .attr("transform","translate(400,450)")
+            .append('text')
+            .text("场均ACE球")
+            .attr("transform","translate(40,-20)")
+            .attr("font-weight","bold")
+            .attr("fill","rgb(55, 135, 192)")
+
+          var legendcolor = d3.legend.color()
+            .shapeWidth(40)
+            .cells([4,5,6,7])
+            .orient('horizontal')
+            .scale(linear)
+
+          svg.select(".legendcolor")
+            .call(legendcolor)
+
+
+
+                     
+          }; 
+
+
+    </script>
+  </head>
+<body>
+  <script type="text/javascript">
+  /*
+    Use D3 (not dimple.js) to load the TSV file
+    and pass the contents of it to the draw function
+  */
+
+  //example date: 27-05-1934 (16:00 h)
+  format = d3.time.format("%Y/%m/%d");
+
+  d3.csv("year_atp.csv", function(d) {
+      // transform data
+      d['Year'] = format.parse(d['Year']);
+      d['avg_loser_ht'] = +d['avg_loser_ht'];
+      d['ht_sum'] = +d['ht_sum']
+      d['avg_winner_ht'] = +d['avg_winner_ht'];
+      d['avg_winner_age'] = +d['avg_winner_age']
+      d['age_sum']= +d['age_sum']
+      d['ace_sum']= (+d['avg_l_ace'] + +d['avg_w_ace'])/2
+
+      return d;
+  }, draw);
+  </script>
+</body>
+</html>
